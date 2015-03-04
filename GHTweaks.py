@@ -1,16 +1,19 @@
 #Name: GH Tweaks
-#Info: My customizations
+#Info: My customizations - Change Flow % on skin for the specified layers
 #Depend: GCode
 #Type: postprocess
 #Param: startL(int:0) Layer no. to start
 #Param: twLayers(int:3) No. of layers to change
-#Param: twFill(int:90) Change Fill %
-#Param: defFill(int:100) Default/Normal Fill %
+#Param: twFlow(int:90) Change Flow %
+#Param: defFlow(int:100) Default/Normal Flow %
 
 startL = int(startL)
 twLayers = int(twLayers)
-twFill = int(twFill)
-defFill = int(defFill)
+twFlow = int(twFlow)
+defFlow = int(defFlow)
+
+modFlow = False
+currentLayer = 0
 
 with open(filename, "r") as f:
 	lines = f.readlines()
@@ -30,13 +33,21 @@ with open(filename, "w") as f:
 					f.write("; GH Tweaks\n")
 					f.write("; Params startL: %s %i\n" % (type(startL), startL))
 					f.write("; Params twLayers: %s %i\n" % (type(twLayers), twLayers))
-					f.write("; Params twFill: %s %i\n" % (type(twFill), twFill))
-					f.write("; Params defFill: %s %i\n" % (type(defFill), defFill))
+					f.write("; Params twFlow: %s %i\n" % (type(twFlow), twFlow))
+					f.write("; Params defFlow: %s %i\n" % (type(defFlow), defFlow))
 
-				if currentLayer >= startL and currentLayer < ( startL + twLayers ):
-					f.write("; GH Tweaks - Print Layers %i-%i (+%i) at %i%%\n" % ( startL, (startL+twLayers), twLayers, twFill))
-					f.write("M221 T0 S%f\n" % (twFill))
+			if currentLayer >= startL and currentLayer < ( startL + twLayers ):
+				if line.startswith(";TYPE:SKIN"):  #Enable flow tweaks on SKIN type only
+					f.write("; GH Tweaks - Print Layers %i-%i (+%i) at %i%%\n" % ( startL, (startL+twLayers), twLayers, twFlow))
+					f.write("M221 T0 S%f\n" % (twFlow))
+					modFlow = True
 
-				if currentLayer == ( startL + twLayers ):
-					f.write("; GH Tweaks - Print Layers %i-%i (+%i) at (%i)%% -- reset to %i\n" % ( startL, (startL+twLayers), twLayers, twFill, defFill ))
-					f.write("M221 T0 S%f\n" % (defFill))
+			if line.startswith(";TYPE:") and not line.startswith(";TYPE:SKIN") and modFlow == True:  #Restore default flow for other types
+				f.write("; GH Tweaks - Print Layers %i-%i (+%i) at (%i)%% -- reset to %i\n" % ( startL, (startL+twLayers), twLayers, twFlow, defFlow ))
+				f.write("M221 T0 S%f\n" % (defFlow))
+				modFlow = False
+
+			if currentLayer == ( startL + twLayers ) and modFlow == True:
+				f.write("; GH Tweaks - Print Layers %i-%i (+%i) at (%i)%% -- reset to %i\n" % ( startL, (startL+twLayers), twLayers, twFlow, defFlow ))
+				f.write("M221 T0 S%f\n" % (defFlow))
+				modFlow = False

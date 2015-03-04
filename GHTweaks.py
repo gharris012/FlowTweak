@@ -36,6 +36,10 @@ with open(filename, "w") as f:
 					f.write("; Params twFlow: %s %i\n" % (type(twFlow), twFlow))
 					f.write("; Params defFlow: %s %i\n" % (type(defFlow), defFlow))
 
+					# start off at default flow rate
+					f.write("; GH Tweaks - Print Layers %i-%i (+%i) at (%i)%% -- reset to %i\n" % ( startL, (startL+twLayers), twLayers, twFlow, defFlow ))
+					f.write("M221 T0 S%f\n" % (defFlow))
+
 			if currentLayer >= startL and currentLayer < ( startL + twLayers ):
 				if line.startswith(";TYPE:SKIN"):  #Enable flow tweaks on SKIN type only
 					f.write("; GH Tweaks - Print Layers %i-%i (+%i) at %i%%\n" % ( startL, (startL+twLayers), twLayers, twFlow))
@@ -51,3 +55,7 @@ with open(filename, "w") as f:
 				f.write("; GH Tweaks - Print Layers %i-%i (+%i) at (%i)%% -- reset to %i\n" % ( startL, (startL+twLayers), twLayers, twFlow, defFlow ))
 				f.write("M221 T0 S%f\n" % (defFlow))
 				modFlow = False
+
+	# reset to default flow at the end
+	f.write("; GH Tweaks - Print Layers %i-%i (+%i) at (%i)%% -- reset to %i\n" % ( startL, (startL+twLayers), twLayers, twFlow, defFlow ))
+	f.write("M221 T0 S%f\n" % (defFlow))

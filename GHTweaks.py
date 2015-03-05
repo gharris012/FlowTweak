@@ -1,5 +1,5 @@
 #Name: GH Tweaks
-#Info: My customizations - Change Flow % on skin for the specified layers
+#Info: My customizations - Change Flow % on skin/skirt for the specified layers
 #Depend: GCode
 #Type: postprocess
 #Param: startL(int:0) Layer no. to start
@@ -41,12 +41,12 @@ with open(filename, "w") as f:
 					f.write("M221 T0 S%f\n" % (defFlow))
 
 			if currentLayer >= startL and currentLayer < ( startL + twLayers ):
-				if line.startswith(";TYPE:SKIN"):  #Enable flow tweaks on SKIN type only
+				if line.startswith(";TYPE:SKIN") or line.startswith(";TYPE:SKIRT"):  #Enable flow tweaks on SKIN and SKIRT type only
 					f.write("; GH Tweaks - Print Layers %i-%i (+%i) at %i%%\n" % ( startL, (startL+twLayers), twLayers, twFlow))
 					f.write("M221 T0 S%f\n" % (twFlow))
 					modFlow = True
 
-			if line.startswith(";TYPE:") and not line.startswith(";TYPE:SKIN") and modFlow == True:  #Restore default flow for other types
+			if line.startswith(";TYPE:") and not ( line.startswith(";TYPE:SKIN") or line.startswith(";TYPE:SKIRT") ) and modFlow == True:  #Restore default flow for other types
 				f.write("; GH Tweaks - Print Layers %i-%i (+%i) at (%i)%% -- reset to %i\n" % ( startL, (startL+twLayers), twLayers, twFlow, defFlow ))
 				f.write("M221 T0 S%f\n" % (defFlow))
 				modFlow = False

@@ -30,32 +30,32 @@ with open(filename, "w") as f:
 				currentLayer = int(line[7:].strip())
 
 				if currentLayer == 0:
-					f.write("; FlowTweak\n")
-					f.write("; Params startL: %s %i\n" % (type(startL), startL))
-					f.write("; Params twLayers: %s %i\n" % (type(twLayers), twLayers))
-					f.write("; Params twFlow: %s %i\n" % (type(twFlow), twFlow))
-					f.write("; Params defFlow: %s %i\n" % (type(defFlow), defFlow))
+					#f.write("; FlowTweak\n")
+					#f.write("; Params startL: %i\n" % (startL))
+					#f.write("; Params twLayers: %i\n" % (twLayers))
+					#f.write("; Params twFlow: %i\n" % (twFlow))
+					#f.write("; Params defFlow: %i\n" % (defFlow))
 
 					# start off at default flow rate
-					f.write("; FlowTweak - Print Layers %i-%i at %i%% -- reset to %i\n" % ( startL, (startL+twLayers), twFlow, defFlow ))
+					f.write("; FlowTweak - Print Layers %i-%i at %i%% -- start at %i%%\n" % ( startL, (startL+twLayers), twFlow, defFlow ))
 					f.write("M221 T0 S%f\n" % (defFlow))
 
 			if currentLayer >= startL and currentLayer < ( startL + twLayers ):
 				if line.startswith(";TYPE:SKIN") or line.startswith(";TYPE:SKIRT"):  #Enable flow tweaks on SKIN and SKIRT type only
-					f.write("; FlowTweak - Print Layers %i-%i at %i%%\n" % ( startL, (startL+twLayers), twFlow))
+					f.write("; FlowTweak - Reduce flow to %i%%\n" % (twFlow))
 					f.write("M221 T0 S%f\n" % (twFlow))
 					modFlow = True
 
 			if line.startswith(";TYPE:") and not ( line.startswith(";TYPE:SKIN") or line.startswith(";TYPE:SKIRT") ) and modFlow == True:  #Restore default flow for other types
-				f.write("; FlowTweak - Print Layers %i-%i at %i%% -- reset to %i\n" % ( startL, (startL+twLayers), twFlow, defFlow ))
+				f.write("; FlowTweak - Reset flow to %i%%\n" % (defFlow))
 				f.write("M221 T0 S%f\n" % (defFlow))
 				modFlow = False
 
 			if currentLayer == ( startL + twLayers ) and modFlow == True:
-				f.write("; FlowTweak - Print Layers %i-%i at %i%% -- reset to %i\n" % ( startL, (startL+twLayers), twFlow, defFlow ))
+				f.write("; FlowTweak - Reset flow to %i%%\n" % (defFlow))
 				f.write("M221 T0 S%f\n" % (defFlow))
 				modFlow = False
 
 	# reset to default flow at the end
-	f.write("; FlowTweak - Print Layers %i-%i at %i%% -- reset to %i\n" % ( startL, (startL+twLayers), twFlow, defFlow ))
+	f.write("; FlowTweak - Reset flow to %i%%\n" % (defFlow))
 	f.write("M221 T0 S%f\n" % (defFlow))

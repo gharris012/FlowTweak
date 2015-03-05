@@ -1,4 +1,4 @@
-#Name: Flow Tweak
+#Name: FlowTweak
 #Info: Change Flow % on skin/skirt over a range of layers
 #Depend: GCode
 #Type: postprocess

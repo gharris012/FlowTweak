@@ -5,7 +5,7 @@
 #Param: startL(int:0) Layer no. to start
 #Param: twLayers(int:3) No. of layers to change
 #Param: twSkinFlow(int:80) Change Skin Flow %
-#Param: twSkirtFlow(int:80) Change Skirt Flow %
+#Param: twSkirtFlow(int:100) Change Skirt Flow %
 #Param: defFlow(int:100) Default/Normal Flow %
 
 startL = int(startL)

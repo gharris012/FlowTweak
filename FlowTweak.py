@@ -1,68 +1,135 @@
 #Name: FlowTweak
 #Info: Change Flow % on skin/skirt over a range of layers
-#Depend: GCode
-#Type: postprocess
-#Param: startL(int:0) Layer no. to start
-#Param: twLayers(int:3) No. of layers to change
-#Param: twSkinFlow(int:80) Change Skin Flow %
-#Param: twSkirtFlow(int:100) Change Skirt Flow %
-#Param: defFlow(int:100) Default/Normal Flow %
 
-startL = int(startL)
-twLayers = int(twLayers)
-twSkinFlow = int(twSkinFlow)
-twSkirtFlow = int(twSkirtFlow)
-defFlow = int(defFlow)
+from ..Script import Script
 
-modFlow = False
-currentLayer = 0
+class FlowTweak(Script):
+    def __init__(self):
+        super().__init__()
 
-with open(filename, "r") as f:
-	lines = f.readlines()
+    def getSettingDataString(self):
+        return """{
+            "name":"Flow Tweak",
+            "key": "FlowTweak",
+            "metadata": {},
+            "version": 2,
+            "settings":
+            {
+                "start_layer":
+                {
+                    "label": "Start Layer",
+                    "description": "Layer no. to start",
+                    "unit": "",
+                    "type": "int",
+                    "default_value": 0
+                },
+                "layer_count":
+                {
+                    "label": "Layer Count",
+                    "description": "Number of layers to apply flow rate change",
+                    "unit": "",
+                    "type": "int",
+                    "default_value": 2
+                },
+                "skin_flow_rate":
+                {
+                    "label": "Skin Flow %",
+                    "description": "Flow rate when printing Skin",
+                    "unit": "%",
+                    "type": "int",
+                    "default_value": 80
+                },
+                "skirt_flow_rate":
+                {
+                    "label": "Skirt Flow %",
+                    "description": "Flow rate when printing Skirt",
+                    "unit": "%",
+                    "type": "int",
+                    "default_value": 100
+                },
+                "default_flow_rate":
+                {
+                    "label": "Default Flow %",
+                    "description": "Flow rate when printing anything else",
+                    "unit": "%",
+                    "type": "int",
+                    "default_value": 100
+                }
+            }
+        }"""
 
-with open(filename, "w") as f:
+    def execute(self, data: list):
 
-	for lIndex in xrange(len(lines)):
-		line = lines[lIndex]
+        """data is a list. Each index contains a layer"""
 
-		f.write(line)
+        currentLayer = 0
+        startL = self.getSettingValueByKey("start_layer")
+        twLayers = self.getSettingValueByKey("layer_count")
+        twSkinFlow = self.getSettingValueByKey("skin_flow_rate")
+        twSkirtFlow = self.getSettingValueByKey("skirt_flow_rate")
+        defFlow = self.getSettingValueByKey("default_flow_rate")
 
-		if line.startswith(';'):
-			if line.startswith(';LAYER:'):
-				currentLayer = int(line[7:].strip())
+        modFlow = False
 
-				if currentLayer == 0:
-					#f.write("; FlowTweak\n")
-					#f.write("; Params startL: %i\n" % (startL))
-					#f.write("; Params twLayers: %i\n" % (twLayers))
-					#f.write("; Params twSkinFlow: %i\n" % (twSkinFlow))
-					#f.write("; Params twSkirtFlow: %i\n" % (twSkirtFlow))
-					#f.write("; Params defFlow: %i\n" % (defFlow))
+        myfile = open("C:\\Users\\gharr_000\\Documents\\GitHub\\FlowTweak\\tw.log", "w")
+        myfile.write("Processing...\n")
 
-					# start off at default flow rate
-					f.write("; FlowTweak - Print Layers %i-%i at Skin:%i%%/Skirt:%i%% -- start at %i%%\n" % ( startL, (startL+twLayers), twSkinFlow, twSkirtFlow, defFlow ))
-					f.write("M221 T0 S%f\n" % (defFlow))
+        for layer in data:
+            lines = layer.split("\n")
+            index = data.index(layer)
+            myfile.write("Processing layer index %i\n" % (index))
+            modified_gcode = ""
+            for line in lines:
+                prepend_gcode = ""
+                if line.startswith(';'):
+                    if ";Generated with Cura_SteamEngine" in line:
+                        prepend_gcode += "; FlowTweak\n"
+                        prepend_gcode += "; Params startL: %i\n" % (startL)
+                        prepend_gcode += "; Params twLayers: %i\n" % (twLayers)
+                        prepend_gcode += "; Params twSkinFlow: %i\n" % (twSkinFlow)
+                        prepend_gcode += "; Params twSkirtFlow: %i\n" % (twSkirtFlow)
+                        prepend_gcode += "; Params defFlow: %i\n" % (defFlow)
 
-			if currentLayer >= startL and currentLayer < ( startL + twLayers ):
-				if line.startswith(";TYPE:SKIN"):  #Enable flow tweaks on SKIN type only
-					f.write("; FlowTweak - Reduce SKIN flow to %i%%\n" % (twSkinFlow))
-					f.write("M221 T0 S%f\n" % (twSkinFlow))
-					modFlow = True
-				if line.startswith(";TYPE:SKIRT"):  #Enable flow tweaks on SKIRT type only
-					f.write("; FlowTweak - Reduce SKIRT flow to %i%%\n" % (twSkirtFlow))
-					f.write("M221 T0 S%f\n" % (twSkirtFlow))
-					modFlow = True
+                    if line.startswith(';LAYER:'):
+                        currentLayer = int(line[7:].strip())
+                        myfile.write("Found layer %i\n" % (currentLayer))
 
-			if line.startswith(";TYPE:") and not ( line.startswith(";TYPE:SKIN") or line.startswith(";TYPE:SKIRT") ) and modFlow == True:  #Restore default flow for other types
-				f.write("; FlowTweak - Reset flow to %i%%\n" % (defFlow))
-				f.write("M221 T0 S%f\n" % (defFlow))
-				modFlow = False
+                        if currentLayer == 0:
+                            # start off at default flow rate
+                            prepend_gcode += "; FlowTweak - Print Layers %i-%i at Skin:%i%%/Skirt:%i%% -- start at %i%%\n" % ( startL, (startL+twLayers), twSkinFlow, twSkirtFlow, defFlow )
+                            prepend_gcode += "M221 T0 S%f\n" % (defFlow)
 
-			if currentLayer == ( startL + twLayers ) and modFlow == True:
-				f.write("; FlowTweak - Reset flow to %i%%\n" % (defFlow))
-				f.write("M221 T0 S%f\n" % (defFlow))
-				modFlow = False
+                    if currentLayer >= startL and currentLayer < ( startL + twLayers ):
+                        if line.startswith(";TYPE:SKIN"):  #Enable flow tweaks on SKIN type only
+                            prepend_gcode += "; FlowTweak - Reduce SKIN flow to %i%%\n" % (twSkinFlow)
+                            prepend_gcode += "M221 T0 S%f\n" % (twSkinFlow)
+                            modFlow = True
 
-	# reset to default flow at the end
-	f.write("; FlowTweak - Reset flow to %i%%\n" % (defFlow))
-	f.write("M221 T0 S%f\n" % (defFlow))
+                        if line.startswith(";TYPE:SKIRT"):  #Enable flow tweaks on SKIRT type only
+                            prepend_gcode += "; FlowTweak - Reduce SKIRT flow to %i%%\n" % (twSkirtFlow)
+                            prepend_gcode += "M221 T0 S%f\n" % (twSkirtFlow)
+                            modFlow = True
+
+                    if line.startswith(";TYPE:") and not ( line.startswith(";TYPE:SKIN") or line.startswith(";TYPE:SKIRT") ) and modFlow == True:  #Restore default flow for other types
+                        prepend_gcode += "; FlowTweak - Reset flow to %i%%\n" % (defFlow)
+                        prepend_gcode += "M221 T0 S%f\n" % (defFlow)
+                        modFlow = False
+
+                    if currentLayer == ( startL + twLayers ) and modFlow == True:
+                        prepend_gcode += "; FlowTweak - Reset flow to %i%%\n" % (defFlow)
+                        prepend_gcode += "M221 T0 S%f\n" % (defFlow)
+                        modFlow = False
+                modified_gcode += prepend_gcode + line + "\n"
+
+            if modFlow:
+                # reset to default flow at the end of the layer
+                modified_gcode += "; FlowTweak - Reset flow to %i%%\n" % (defFlow)
+                modified_gcode += "M221 T0 S%f\n" % (defFlow)
+                modFlow = False
+
+            layer = modified_gcode
+            data[index] = layer
+
+        myfile.close()
+
+        return data

@@ -21,7 +21,7 @@ class FlowTweak(Script):
                     "description": "Layer no. to start",
                     "unit": "",
                     "type": "int",
-                    "default_value": 0
+                    "default_value": 1
                 },
                 "layer_count":
                 {
@@ -29,7 +29,7 @@ class FlowTweak(Script):
                     "description": "Number of layers to apply flow rate change",
                     "unit": "",
                     "type": "int",
-                    "default_value": 2
+                    "default_value": 1
                 },
                 "skin_flow_rate":
                 {
